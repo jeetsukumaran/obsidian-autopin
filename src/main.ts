@@ -1,4 +1,4 @@
-import { App, Plugin, PluginSettingTab, Setting, WorkspaceLeaf } from 'obsidian';
+import { App, Plugin, PluginSettingTab, Setting, WorkspaceLeaf, TFile, View, FileView } from 'obsidian';
 
 interface AutoPinPluginSettings {
     defaultAutoPin: boolean;
@@ -82,7 +82,7 @@ export default class AutoPinPlugin extends Plugin {
 
     pinAllOpen() {
         this.app.workspace.iterateAllLeaves((leaf: WorkspaceLeaf) => {
-            if (!this.isLeafPinned(leaf)) {
+            if (this.shouldPin(leaf)) {
                 leaf.setPinned(true);
             }
         });
@@ -90,33 +90,40 @@ export default class AutoPinPlugin extends Plugin {
 
     unpinAllOpen() {
         this.app.workspace.iterateAllLeaves((leaf: WorkspaceLeaf) => {
-            if (this.isLeafPinned(leaf)) {
-                leaf.setPinned(false);
-            }
+            leaf.setPinned(false);
         });
     }
 
     handleLayoutChange() {
         if (this.settings.defaultAutoPin) {
             this.app.workspace.iterateAllLeaves((leaf: WorkspaceLeaf) => {
-                if (!this.isLeafPinned(leaf) && this.shouldAutoPin(leaf)) {
+                if (this.shouldPin(leaf)) {
                     leaf.setPinned(true);
                 }
             });
         }
     }
 
-    isLeafPinned(leaf: WorkspaceLeaf): boolean {
-        // Since there's no direct method to check if a leaf is pinned,
-        // we can try to infer it from the leaf's state or properties
-        // This is a placeholder implementation and may need adjustment
-        return (leaf as any).pinned === true;
-    }
+    shouldPin(leaf: WorkspaceLeaf): boolean {
+        if (!(leaf.view instanceof FileView)) {
+            return false;
+        }
 
-    shouldAutoPin(leaf: WorkspaceLeaf): boolean {
-        // Implement logic to determine if a leaf should be auto-pinned
-        // This could involve checking the leaf type, content, or other criteria
-        return true; // Placeholder implementation
+        // const viewType = leaf.view.getViewType();
+
+        // if (viewType === "empty") {
+        //     return false;
+        // }
+
+        // if (viewType === "markdown") {
+        //     const file = leaf.view.file;
+        //     return file instanceof TFile && file.stat.size > 0;
+        // }
+
+        // Add any other conditions for pinning here
+        // For example, you might want to check other view types
+
+        return true;
     }
 }
 
