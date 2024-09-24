@@ -1,11 +1,15 @@
-import { App, Plugin, PluginSettingTab, Setting, WorkspaceLeaf, TFile, View, FileView } from 'obsidian';
+import { App, Plugin, PluginSettingTab, Setting, WorkspaceLeaf, TFile, View, FileView, TAbstractFile } from 'obsidian';
 
 interface AutoPinPluginSettings {
     defaultAutoPin: boolean;
+    cleanSlateOption: 'empty' | 'daily' | 'custom';
+    customCleanSlateFile: string;
 }
 
 const DEFAULT_SETTINGS: AutoPinPluginSettings = {
-    defaultAutoPin: false
+    defaultAutoPin: false,
+    cleanSlateOption: 'empty',
+    customCleanSlateFile: ''
 }
 
 export default class AutoPinPlugin extends Plugin {
@@ -44,6 +48,12 @@ export default class AutoPinPlugin extends Plugin {
             id: 'unpin-all-open',
             name: 'Unpin All Open',
             callback: () => this.unpinAllOpen()
+        });
+
+        this.addCommand({
+            id: 'clean-slate',
+            name: 'Clean Slate',
+            callback: () => this.cleanSlate()
         });
 
         if (this.settings.defaultAutoPin) {
@@ -108,22 +118,47 @@ export default class AutoPinPlugin extends Plugin {
         if (!(leaf.view instanceof FileView)) {
             return false;
         }
-
-        // const viewType = leaf.view.getViewType();
-
-        // if (viewType === "empty") {
-        //     return false;
-        // }
-
-        // if (viewType === "markdown") {
-        //     const file = leaf.view.file;
-        //     return file instanceof TFile && file.stat.size > 0;
-        // }
-
-        // Add any other conditions for pinning here
-        // For example, you might want to check other view types
-
         return true;
+    }
+
+
+    async cleanSlate() {
+        // Get all leaves
+        const leaves = this.app.workspace.getLeavesOfType('markdown');
+
+        // Close all leaves
+        for (const leaf of leaves) {
+            await leaf.detach();
+        }
+
+        // Wait a moment for Obsidian to process the closures
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        // Open specified file based on settings
+        switch (this.settings.cleanSlateOption) {
+            case 'daily':
+                await this.openDailyNote();
+                break;
+            case 'custom':
+                await this.openCustomFile();
+                break;
+            // For 'empty', do nothing
+        }
+    }
+
+    async openDailyNote() {
+        // This uses the core daily notes functionality
+        // It will work if the core daily notes plugin is enabled
+        // await this.app.commands.executeCommandById('daily-notes');
+    }
+
+    async openCustomFile() {
+        const file = this.app.vault.getAbstractFileByPath(this.settings.customCleanSlateFile);
+        if (file instanceof TFile) {
+            await this.app.workspace.getLeaf().openFile(file);
+        } else {
+            console.error("Custom file not found:", this.settings.customCleanSlateFile);
+        }
     }
 }
 
@@ -149,5 +184,32 @@ class AutoPinSettingTab extends PluginSettingTab {
                     this.plugin.settings.defaultAutoPin = value;
                     await this.plugin.saveSettings();
                 }));
+
+        new Setting(containerEl)
+            .setName('Clean Slate Option')
+            .setDesc('Choose what to do after closing all tabs')
+            .addDropdown(dropdown => dropdown
+                .addOption('empty', 'Leave empty')
+                .addOption('daily', 'Open daily note')
+                .addOption('custom', 'Open custom file')
+                .setValue(this.plugin.settings.cleanSlateOption)
+                .onChange(async (value: AutoPinPluginSettings['cleanSlateOption']) => {
+                    this.plugin.settings.cleanSlateOption = value;
+                    await this.plugin.saveSettings();
+                    this.display(); // Refresh to show/hide custom file setting
+                }));
+
+        if (this.plugin.settings.cleanSlateOption === 'custom') {
+            new Setting(containerEl)
+                .setName('Custom Clean Slate File')
+                .setDesc('Specify the file to open after Clean Slate (use full path from vault root)')
+                .addText(text => text
+                    .setPlaceholder('Example: folder/file.md')
+                    .setValue(this.plugin.settings.customCleanSlateFile)
+                    .onChange(async (value) => {
+                        this.plugin.settings.customCleanSlateFile = value;
+                        await this.plugin.saveSettings();
+                    }));
+        }
     }
 }
