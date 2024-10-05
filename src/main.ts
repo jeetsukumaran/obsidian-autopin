@@ -56,6 +56,12 @@ export default class AutoPinPlugin extends Plugin {
             callback: () => this.cleanSlate()
         });
 
+        this.addCommand({
+            id: 'clean-slate-and-reopen-current',
+            name: 'Clean Slate and Reopen Current',
+            callback: () => this.cleanSlateAndReopenCurrent()
+        });
+
         if (this.settings.defaultAutoPin) {
             this.activateAutoPin();
         }
@@ -121,7 +127,6 @@ export default class AutoPinPlugin extends Plugin {
         return true;
     }
 
-
     async cleanSlate() {
         // Get all leaves
         const leaves = this.app.workspace.getLeavesOfType('markdown');
@@ -158,6 +163,15 @@ export default class AutoPinPlugin extends Plugin {
             await this.app.workspace.getLeaf().openFile(file);
         } else {
             console.error("Custom file not found:", this.settings.customCleanSlateFile);
+        }
+    }
+
+    async cleanSlateAndReopenCurrent() {
+        const activeFile = this.app.workspace.getActiveFile();
+        await this.cleanSlate();
+
+        if (activeFile instanceof TFile) {
+            await this.app.workspace.getLeaf().openFile(activeFile);
         }
     }
 }
