@@ -129,7 +129,10 @@ export default class AutoPinPlugin extends Plugin {
 
     async cleanSlate() {
         // Get all leaves
-        const leaves = this.app.workspace.getLeavesOfType('markdown');
+        const leaves = (
+                this.app.workspace.getLeavesOfType('markdown')
+                    .concat(this.app.workspace.getLeavesOfType('pdf'))
+        )
 
         // Close all leaves
         for (const leaf of leaves) {
@@ -139,22 +142,9 @@ export default class AutoPinPlugin extends Plugin {
         // Wait a moment for Obsidian to process the closures
         await new Promise(resolve => setTimeout(resolve, 100));
 
-        // Open specified file based on settings
-        switch (this.settings.cleanSlateOption) {
-            case 'daily':
-                await this.openDailyNote();
-                break;
-            case 'custom':
-                await this.openCustomFile();
-                break;
-            // For 'empty', do nothing
-        }
     }
 
     async openDailyNote() {
-        // This uses the core daily notes functionality
-        // It will work if the core daily notes plugin is enabled
-        // await this.app.commands.executeCommandById('daily-notes');
     }
 
     async openCustomFile() {
