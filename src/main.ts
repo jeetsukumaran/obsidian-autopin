@@ -140,7 +140,7 @@ export default class AutoPinPlugin extends Plugin {
         }
 
         // Wait a moment for Obsidian to process the closures
-        await new Promise(resolve => setTimeout(resolve, 100));
+        // await new Promise(resolve => setTimeout(resolve, 100));
 
     }
 
