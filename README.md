@@ -50,6 +50,8 @@ Access these commands through the Command Palette (Ctrl/Cmd + P):
 - **Toggle AutoPin**: Switch between activated and deactivated states.
 - **Pin all open**: Pin all currently open leaves.
 - **Unpin all open**: Unpin all currently pinned leaves.
+- **Clean slate**: close all documents, pinned or otherwise.
+- **Clean slate and reopen current**: close all documents and then open the current document.
 
 ### Settings
 
