@@ -132,6 +132,7 @@ export default class AutoPinPlugin extends Plugin {
         const leaves = (
                 this.app.workspace.getLeavesOfType('markdown')
                     .concat(this.app.workspace.getLeavesOfType('pdf'))
+                    .concat(this.app.workspace.getLeavesOfType('canvas'))
         )
 
         // Close all leaves
